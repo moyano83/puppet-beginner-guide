@@ -41,3 +41,79 @@ file { '<name>':
      notify => Service['<service_name>'], # restart this service if the file changes
 }
 ```
+# Chapter 4 
+Git allows to distribute puppet files among different severs and have them update their configuration automatically. 
+
+# Chapter 5
+Puppet allows you to create and manage users, to do this define a user in a node as follows:
+```
+node '<nodename>'{
+	user{'<username>':
+	ensure => present,
+	home => '<path to users home>'
+	managehome => true, #this attribute tells puppet to create the dir
+	password => '<userpassword>' #Althought this is not recommended, use ssh. To disable password login put a * in this field
+	}
+}
+```
+To define an ssh key resource, you define the type ssh_authorized_key:
+```
+ssh_authorized_key { '<name_key>':
+        user => '<username>',
+        type => '<encoding type>',
+	key => '<the rsa public key without the ssh-keygen beginning or the  <user>@<host> end>' #To disable a user ssh, leave this property blank
+}
+```
+
+# Chapter 6
+*commands*
+Commands can be executed with the `exec` command. Puppet executes the commands with the `exec` resource in linux, full paths to command is advised.
+```
+exec{'<name>':
+command => '<the command to run>'
+cwd => '<The path from where to run the command>'
+creates => '<full path to a file, if file exists the command is not executed>'
+unless => '<command to run, if exit code=0 command is not executed>'
+ifonly => '<command to run, if exit code=0, command is executed>'
+refreshonly => '[true/false]#command is triggered by subscribe/notify from other resource'
+subscribe => '<path to file that if changes and refreshonly=true, would trigger the execution of this command>'
+require => '<dependencies. i.e: Exec[<exec_name>]>'
+path => '<paths to search for commands to avoid putting the full path>'
+} 
+
+If you want to specify a set of default search paths for all exec resources, you can put this in your main _site.pp_ file, in this case, the format will be:
+```
+#Note the capital E
+Exec{#No exec name
+path => '<paths>'
+}
+```
+*cronjobs*
+It is possible to schedule jobs for execution by using the cron resource type like this:
+```
+cron{'<name>':
+command => '<command>',
+hour => '<hours from 0 to 23>',
+minute =>'<minutes from 0 to 59>',
+weekday => '<week of the day>',
+month => '<Month>',
+monthday => '<day of the month>',
+user => '<user to add the cron to, defaults to root>'
+}
+```
+Any cron attribute not specified, defaults to *. 
+A file can be copied recursively by adding the attribute `recurse => true` 
+*templates*
+It is possible to parameterize puppet files to create templates:
+```
+$site_name = 'cat-pictures'
+$site_domain = 'cat-pictures.com'
+file { '/etc/nginx/sites-enabled/cat-pictures.conf':
+	content => template('nginx/vhost.conf.erb'),
+        notify  => Service['nginx'],
+}
+```
+The erb file would contain placehorlders for the parameters in the form `<%= @site_name %>;` It is also possible to pass inline templates by defining the content as:
+`content => inline_template("Six by nine is <%= 6 * 9 %>.\n")`
+*Facts*
+Puppet has a companion tool named facter that provides information such as IP Address, OS type, and so on. To see the list of facts available we can type ` ~$ facter`.
