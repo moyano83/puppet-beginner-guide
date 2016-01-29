@@ -113,7 +113,106 @@ file { '/etc/nginx/sites-enabled/cat-pictures.conf':
         notify  => Service['nginx'],
 }
 ```
-The erb file would contain placehorlders for the parameters in the form `<%= @site_name %>;` It is also possible to pass inline templates by defining the content as:
+The erb (which is the puppet inline template derived from ruby) file would contain placehorlders for the parameters in the form `<%= @site_name %>;` It is also possible to pass inline templates by defining the content as:
 `content => inline_template("Six by nine is <%= 6 * 9 %>.\n")`
 *Facts*
-Puppet has a companion tool named facter that provides information such as IP Address, OS type, and so on. To see the list of facts available we can type ` ~$ facter`.
+Puppet has a companion tool named facter that provides information such as IP Address, OS type, and so on. To see the list of facts available we can type ` ~$ facter`. We can include this parameters in a template like explained before, for example `source => inline_template("The fully qualified domain name is <%= @fqdn %>")`. It is possible to use also ruby expressions and ruby methods, i.e:
+`$vagrant_vm = inline_template("<%= FileTest.exists?('/tmp/vagrant-puppet') ? 'true' : 'false' %>")`
+
+# Chapter 7
+It is possible to define groups of resources in arrays to simplify the declaration:
+```
+package{['php5-cli','php5-fpm','php5-pear']:
+	ensure => installed,
+	require => [Package['ntp'],File['/var/temp/conf.cfg']],
+}
+```
+*Definitions*
+With the `define` keyword, we can create resource types that can be used in puppet:
+```
+define script_job($hour, $minute) {
+     file { "/usr/local/bin/${name}":
+       source => "puppet:///modules/scripts/${name}",
+       mode   => '0755',
+     }
+     cron { "Run ${name}":
+       command => "/usr/local/bin/${name}",
+       hour    => '${hour}',
+       minute  => '${minute}',
+     } 
+}
+```
+After this, we can create a resource of type _script_job_ like this: 
+```
+script_job(30,00){'script_name':
+<param> => '<value>',
+...
+}
+```
+To define optional parameters, we can assign them an initial value on the type definition.
+*classes*
+This syntax can also be applied to classes, that can have parameters in its definition, as well as default values for optional parameters.
+```
+class hadoop($role = 'node') {
+     ...
+}
+```
+If you use `require` instead of `import` in the node definition, it will behave just like include, except it specifies that everything in the required class must be applied immediately
+Classes are singletons; that is, Puppet only allows one instance of a parameterized class to exist on a node at a time, definitions are not restricted in number.
+
+# Chapter 8
+*If statements*
+``
+if <expression>{
+<secuence>
+}elif <expression>{
+<secuence>
+}else{
+<secuence>
+}
+``
+In puppet, we also have the `unless` conditional, which is the negate version of if.
+
+*Case expressions*
+```
+case EXPRESSION {
+     CASE1 { BLOCK1 }
+     CASE2 { BLOCK2 }
+     CASE3 { BLOCK3 }
+     ...
+     default : { ... }
+}
+```
+In this situation, `case` applies the first expression it matches. It is advised to have a default case, if nothing matches and it is supposed to, we can signal an error with the `fail` function. To match more cases in a single line:
+```
+'case1','case2'{...}
+```
+*Selectors*
+Similar to case, but returns a value when it matches:
+```
+ $os_type = $::operatingsystem ? {
+     'Ubuntu' => 'Debianlike',
+     'RedHat' => 'Redhatlike',
+     default => 'Unknown',
+}
+```
+*Expressions*
+Puppet logic operators `'==', '!=', '>', '<', '>=', '<=', 'if <value> in <value2>'`
+*Operators*
+ Puppet aritmetic operators `'+', '-', '/', '*'`
+Bitwise operators `'<<'` which multiplies the number by 2 and `'>>'` which divides it by 2. 
+*Regular expressions*
+To test for a regular expression, we enclose the expression with `/` and the regex match operator is `=~`. The regex non match is `!~`. The regex language is the same as ruby, and they can be used in case matching. The captured expression is available in the variable $0, and if we enclose part of the expression in parenteses, the expression in parenteses can be captured as $1...$n where n is the number of parenteses included in the regex.
+*Substitutios*
+The function `regsubst(STRING, REGEX, REPLACEMENT` substitutes the captured `REGEX` in the `STRING` with the value `REPLACEMENT`. You can also use capture variables, as in conditional statements. Here, the contents of successive capture variables are named \1, \2, and so on.
+*Arrays*
+An array element can be recover onwards `<array>[<position>]` and backwards, being -1 the last element of the array. The operator `in` can be used to test membership.
+*Hashes*
+A hash is a set of paired elements, the first is the key and the second the value:
+```
+$<name>={
+<key1> => <value1>
+<key2> => <value2>
+}
+```
+And recover elements by `$<name>[<key>]`. The key must be an String, but value can be any type. The `in` operator can be used to test membership.
