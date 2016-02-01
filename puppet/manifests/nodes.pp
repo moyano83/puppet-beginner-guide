@@ -19,4 +19,7 @@ node 'demo' {
 class { 'ntp':
            server => 'us.pool.ntp.org',
          }
+	file{'/tmp/test':
+           content => 'Zaphod Beeblebrox, this is a very large drink',
+         }
 }

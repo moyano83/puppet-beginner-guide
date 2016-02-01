@@ -216,3 +216,42 @@ $<name>={
 }
 ```
 And recover elements by `$<name>[<key>]`. The key must be an String, but value can be any type. The `in` operator can be used to test membership.
+wget $cloudera_tarball -O ./puppet/hadoop/files/hadoop.tar.gz
+
+# Chapter 9
+*Reporting*
+To enable reporting in puppet, pass the flag `--summarize` to `puppet apply`, you can check the default value of this flag in `/etc/puppet/puppet.conf`: 
+```
+[main]
+   report=true
+```
+or by executing `sudo puppet config print report`. The report files are writen in `/var/lib/puppet/` by default.
+*Debug*
+The debug flag `--debug` gives you more information than with the normal `puppet apply` execution.
+*noop*
+The `--noop` flag set the execution in dry-run-mode, which means that puppet won't change any change on the system. 
+*Syntax checking*
+Puppet has a tool to validate the syntax, that is available with the command `puppet parser validate <filename>`.
+*Notify resources*
+The notify resource prints out its name to the console when you run Puppet:
+`notify{'<text to print in the screen>'}`
+*Exec output*
+The _exec_ resource has a property _logoutput_ that can be set to true to output the result of a command even if it is successful. It has also a property to specify the exit status of the command: _returns_ (0 for successful execution, or any other numerical value).
+*Monitoring*
+A common technique to monitor the status of the servers managed by puppet is to write a file in each of the servers (for example the timestamp in /tmp), so it can be checked by alert systems like nagios. 
+*Errors*
+There is two type of errors, compilation errors (which are specified on the screen) and errors from commands executed by _exec_. 
+
+# Chapter 10
+*Puppet Style*
+Good practices on writing puppet manifests:
+- Break your code into modules of independent chunks of functionality.
+- Refactor common code into definitions.
+- Keep node declarations simple, business logic should be in modules.
+- Use `puppet-lint` tool to checks your manifest to make sure it conforms to the Puppet Labs official style guidelines.
+*Useful learning resources*
+- [Puppet Type Reference](http://docs.puppetlabs.com/references/latest/type.html)
+- [Puppet Language Reference](http://docs.puppetlabs.com/puppet/3/reference/lang_summary.html)
+- [Core Facts Reference](http://docs.puppetlabs.com/facter/latest/core_facts.html)
+- [Puppet style](http://docs.puppetlabs.com/guides/style_guide.html)
+- [Puppet Forge](http://forge.puppetlabs.com/) Community repository for puppet code.
