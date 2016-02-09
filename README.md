@@ -80,8 +80,10 @@ subscribe => '<path to file that if changes and refreshonly=true, would trigger 
 require => '<dependencies. i.e: Exec[<exec_name>]>'
 path => '<paths to search for commands to avoid putting the full path>'
 } 
+```
 
 If you want to specify a set of default search paths for all exec resources, you can put this in your main _site.pp_ file, in this case, the format will be:
+
 ```
 #Note the capital E
 Exec{#No exec name
